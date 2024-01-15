@@ -10,7 +10,11 @@ router.get('/', (req, res) => {
   return res.send('Hello Dev!');
 } );
 
-router.post('/cidades', CidadesController.create);
+router.post(
+  '/cidades', 
+  CidadesController.crateBodyValidator, 
+  CidadesController.crateQueryValidator, 
+  CidadesController.create);
 
 
 

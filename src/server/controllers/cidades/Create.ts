@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, RequestHandler, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import * as yup from 'yup';
 
@@ -15,11 +15,10 @@ const bodyValidation: yup.Schema<ICidade> = yup.object().shape({
   estado: yup.string().required().min(2),
 });
 
-export const create = async (req: Request<{}, {}, ICidade>, res: Response) => {
-  let validatedData: ICidade | undefined = undefined;
-
+export const crateBodyValidator: RequestHandler = async (req, res, next) => {
   try {
-    validatedData = await bodyValidation.validate(req.body, { abortEarly: false });
+    await bodyValidation.validate(req.body, { abortEarly: false });
+    return next();
   } catch (err) {
     const yupError = err as yup.ValidationError;
     const errors: Record<string, string> = {};
@@ -31,14 +30,37 @@ export const create = async (req: Request<{}, {}, ICidade>, res: Response) => {
 
     return res.status(StatusCodes.BAD_REQUEST).json({ errors });
   }
+};
 
-  console.log(validatedData);
+interface IFilter {
+  filter?: string;
+}
+
+const QueryValidation: yup.Schema<IFilter> = yup.object().shape({
+  filter: yup.string().required().min(3),
+});
+
+export const crateQueryValidator: RequestHandler = async (req, res, next) => {
+  try {
+    await QueryValidation.validate(req.query, { abortEarly: false });
+    return next();
+  } catch (err) {
+    const yupError = err as yup.ValidationError;
+    const errors: Record<string, string> = {};
+
+    yupError.inner.forEach(error => {
+      if (error.path === undefined) return;
+      errors[error.path] = error.message;
+    });
+
+    return res.status(StatusCodes.BAD_REQUEST).json({ errors });
+  }
+};
 
 
-
-
-
-
+export const create = async (req: Request<{}, {}, ICidade>, res: Response) => {
+  
+  console.log(req.body);
 
 
   return res.send('Create!');
